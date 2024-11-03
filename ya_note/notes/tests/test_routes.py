@@ -47,7 +47,7 @@ class TestRoutes(TestCase):
         """
         users_statuses = (
             (self.author, HTTPStatus.OK),
-            (self.reader , HTTPStatus.NOT_FOUND),
+            (self.reader, HTTPStatus.NOT_FOUND),
         )
         for user, status in users_statuses:
             self.client.force_login(user)

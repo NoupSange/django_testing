@@ -1,8 +1,8 @@
 from http import HTTPStatus
 import pytest
 
-from pytest_django.asserts import assertRedirects
 from django.urls import reverse
+from pytest_django.asserts import assertRedirects
 
 
 @pytest.mark.django_db
@@ -12,6 +12,7 @@ def test_home_availability_for_anonymous_user(client):
     response = client.get(url)
     assert response.status_code == HTTPStatus.OK
 
+
 @pytest.mark.django_db
 def test_news_detail_availability_for_anonymous_user(client, news):
     """Страница отдельной новости доступна анонимному пользователю."""
@@ -19,21 +20,6 @@ def test_news_detail_availability_for_anonymous_user(client, news):
     response = client.get(url)
     assert response.status_code == HTTPStatus.OK
 
-
-@pytest.mark.parametrize(
-    'name',
-    ('news:edit', 'news:delete'),
-)
-@pytest.mark.django_db
-def test_comment_delete_edit_availability_for_author(
-        author_client, name, comment
-):
-    """Страницы удаления и редактирования комментария
-    доступны автору комментария.
-    """
-    url = reverse(name, args=(comment.pk,))
-    response = author_client.get(url)
-    assert response.status_code == HTTPStatus.OK
 
 @pytest.mark.parametrize(
     'name',
@@ -50,21 +36,6 @@ def test_comment_delete_edit_availability_for_anonymous_user(
     expected_url = f'{login_url}?next={url}'
     response = client.get(url)
     assertRedirects(response, expected_url)
-
-
-@pytest.mark.parametrize(
-    'name',
-    ('news:edit', 'news:delete'),
-)
-def test_comment_delete_edit_availability_for_anonymous_user(
-        not_author_client, name, comment
-):
-    """Авторизованный пользователь не может зайти на страницы редактирования
-    или удаления чужих комментариев (возвращается ошибка 404).
-    """
-    url = reverse(name, args=(comment.pk,))
-    response = not_author_client.get(url)
-    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.parametrize(
@@ -90,6 +61,7 @@ def test_comment_delete_edit_availability_for_different_users(
     print(parametrized_client)
     response = parametrized_client.get(url)
     assert response.status_code == expected_status
+
 
 @pytest.mark.parametrize(
     'name',

@@ -1,4 +1,3 @@
-# test_content.py
 import pytest
 
 from django.conf import settings
@@ -28,6 +27,7 @@ def test_news_order(client, create_news):
     all_dates = [news.date for news in object_list]
     sorted_dates = sorted(all_dates, reverse=True)
     assert all_dates == sorted_dates
+
 
 @pytest.mark.django_db
 def test_comments_order(client, news, create_comments):
@@ -63,4 +63,3 @@ def test_authorized_client_has_form(author_client, news):
     response = author_client.get(url)
     assert 'form' in response.context
     assert isinstance(response.context['form'], CommentForm)
-

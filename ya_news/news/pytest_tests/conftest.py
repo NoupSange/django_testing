@@ -1,14 +1,15 @@
 
+from datetime import date, timedelta
 import pytest
 
-from django.test.client import Client
 from django.conf import settings
+from django.test.client import Client
 from django.utils import timezone
 
-from news.models import News, Comment
-from datetime import date, datetime, timedelta
+from news.models import Comment, News
 
 today = date.today()
+
 
 @pytest.fixture
 def author(django_user_model):
@@ -29,33 +30,36 @@ def author_client(author):
     client.force_login(author)
     return client
 
+
 @pytest.fixture
 def not_author_client(not_author):
     """Авторизованный читатель."""
     client = Client()
-    client.force_login(not_author)  # Логиним обычного пользователя в клиенте.
+    client.force_login(not_author)
     return client
+
 
 @pytest.fixture
 def news(author):
     """Новость автора."""
-    news = News.objects.create(  # Создаём объект заметки.
+    news = News.objects.create(
         title='Заголовок',
         text='Текст заметки',
         date=today
     )
-    # print(news.author)
     return news
+
 
 @pytest.fixture
 def comment(author, news):
     """Комментарий автора."""
-    comment = Comment.objects.create(  # Создаём объект заметки.
+    comment = Comment.objects.create(
         news=news,
         author=author,
         text='text',
     )
     return comment
+
 
 @pytest.fixture
 def create_news():
@@ -68,6 +72,7 @@ def create_news():
     )
     return all_news
 
+
 @pytest.fixture
 def create_comments(news, author):
     """5 комментариев автора"""
@@ -78,6 +83,7 @@ def create_comments(news, author):
         )
         comment.created = now + timedelta(days=index)
         comment.save()
+
 
 @pytest.fixture
 def form_data():
