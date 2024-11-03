@@ -1,78 +1,104 @@
 from http import HTTPStatus
+import pytest
 
 from pytest_django.asserts import assertRedirects
 from django.urls import reverse
-from news.models import News
-import pytest
 
 
-# Указываем в фикстурах встроенный клиент.
-@pytest.mark.parametrize(
-    'name',  # Имя параметра функции.
-    # Значения, которые будут передаваться в name.
-    ('notes:home', 'users:login', 'users:logout', 'users:signup')
-)
-def test_home_availability_for_anonymous_user(client, name):
-    # Адрес страницы получаем через reverse():
-    url = reverse(name)
+@pytest.mark.django_db
+def test_home_availability_for_anonymous_user(client):
+    """Главная страница доступна анонимному пользователю."""
+    url = reverse('news:home')
+    response = client.get(url)
+    assert response.status_code == HTTPStatus.OK
+
+@pytest.mark.django_db
+def test_news_detail_availability_for_anonymous_user(client, news):
+    """Страница отдельной новости доступна анонимному пользователю."""
+    url = reverse('news:detail', args=(news.pk,))
     response = client.get(url)
     assert response.status_code == HTTPStatus.OK
 
 
 @pytest.mark.parametrize(
     'name',
-    ('notes:list', 'notes:add', 'notes:success')
+    ('news:edit', 'news:delete'),
 )
-def test_pages_availability_for_auth_user(not_author_client, name):
-    url = reverse(name)
-    response = not_author_client.get(url)
+@pytest.mark.django_db
+def test_comment_delete_edit_availability_for_author(
+        author_client, name, comment
+):
+    """Страницы удаления и редактирования комментария
+    доступны автору комментария.
+    """
+    url = reverse(name, args=(comment.pk,))
+    response = author_client.get(url)
     assert response.status_code == HTTPStatus.OK
 
 @pytest.mark.parametrize(
     'name',
-    ('notes:detail', 'notes:edit', 'notes:delete'),
+    ('news:edit', 'news:delete'),
 )
+def test_comment_delete_edit_availability_for_anonymous_user(
+        client, name, comment
+):
+    """При попытке перейти на страницу редактирования или удаления комментария
+    анонимный пользователь перенаправляется на страницу авторизации.
+    """
+    login_url = reverse('users:login')
+    url = reverse(name, args=(comment.pk,))
+    expected_url = f'{login_url}?next={url}'
+    response = client.get(url)
+    assertRedirects(response, expected_url)
+
+
 @pytest.mark.parametrize(
-    # parametrized_client - название параметра, 
-    # в который будут передаваться фикстуры;
-    # Параметр expected_status - ожидаемый статус ответа.
+    'name',
+    ('news:edit', 'news:delete'),
+)
+def test_comment_delete_edit_availability_for_anonymous_user(
+        not_author_client, name, comment
+):
+    """Авторизованный пользователь не может зайти на страницы редактирования
+    или удаления чужих комментариев (возвращается ошибка 404).
+    """
+    url = reverse(name, args=(comment.pk,))
+    response = not_author_client.get(url)
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.parametrize(
     'parametrized_client, expected_status',
-    # В кортеже с кортежами передаём значения для параметров:
     (
         (pytest.lazy_fixture('not_author_client'), HTTPStatus.NOT_FOUND),
         (pytest.lazy_fixture('author_client'), HTTPStatus.OK)
     ),
 )
-# В параметры теста добавляем имена parametrized_client и expected_status.
-def test_pages_availability_for_different_users(
-        parametrized_client, name, slug_for_args, expected_status
+@pytest.mark.parametrize(
+    'name',
+    ('news:edit', 'news:delete'),
+)
+def test_comment_delete_edit_availability_for_different_users(
+        parametrized_client, name, comment, expected_status
 ):
-    url = reverse(name, args=slug_for_args)
-    # Делаем запрос от имени клиента parametrized_client:
+    """Страницы удаления и редактирования
+    комментария доступны автору комментария.
+    Авторизованный пользователь не может зайти на страницы редактирования
+    или удаления чужих комментариев (возвращается ошибка 404).
+    """
+    url = reverse(name, args=(comment.pk,))
+    print(parametrized_client)
     response = parametrized_client.get(url)
-    # Ожидаем ответ страницы, указанный в expected_status:
     assert response.status_code == expected_status
 
 @pytest.mark.parametrize(
-    # Вторым параметром передаём note_object, 
-    # в котором будет либо фикстура с объектом заметки, либо None.
-    'name, args',
-    (
-        ('notes:detail', pytest.lazy_fixture('slug_for_args')),
-        ('notes:edit', pytest.lazy_fixture('slug_for_args')),
-        ('notes:delete', pytest.lazy_fixture('slug_for_args')),
-        ('notes:add', None),
-        ('notes:success', None),
-        ('notes:list', None),
-    ),
+    'name',
+    ('users:signup', 'users:login', 'users:logout',)
 )
-# Передаём в тест анонимный клиент, name проверяемых страниц и note_object:
-def test_redirects(client, name, args):
-    login_url = reverse('users:login')
-    # Формируем URL в зависимости от того, передан ли объект заметки:
-    url = reverse(name, args=args)
-    expected_url = f'{login_url}?next={url}'
+def test_authorization_availability_for_anonymous_user(name, client):
+    """Страницы регистрации пользователей, входа в учётную
+    запись и выхода из неё доступны анонимным пользователям.
+    """
+    url = reverse(name)
     response = client.get(url)
-    # Ожидаем, что со всех проверяемых страниц анонимный клиент
-    # будет перенаправлен на страницу логина:
-    assertRedirects(response, expected_url) 
+    assert response.status_code == HTTPStatus.OK

@@ -1,51 +1,86 @@
-# conftest.py
+
 import pytest
 
-# Импортируем класс клиента.
 from django.test.client import Client
+from django.conf import settings
+from django.utils import timezone
 
-# Импортируем модель заметки, чтобы создать экземпляр.
-from notes.models import Note
+from news.models import News, Comment
+from datetime import date, datetime, timedelta
 
+today = date.today()
 
 @pytest.fixture
-# Используем встроенную фикстуру для модели пользователей django_user_model.
-def author(django_user_model):  
+def author(django_user_model):
+    """Автор новостей и комментариев."""
     return django_user_model.objects.create(username='Автор')
 
 
 @pytest.fixture
-def not_author(django_user_model):  
+def not_author(django_user_model):
+    """Читатель."""
     return django_user_model.objects.create(username='Не автор')
 
 
 @pytest.fixture
-def author_client(author):  # Вызываем фикстуру автора.
-    # Создаём новый экземпляр клиента, чтобы не менять глобальный.
+def author_client(author):
+    """Авторизованный автор."""
     client = Client()
-    client.force_login(author)  # Логиним автора в клиенте.
+    client.force_login(author)
     return client
 
 @pytest.fixture
 def not_author_client(not_author):
+    """Авторизованный читатель."""
     client = Client()
     client.force_login(not_author)  # Логиним обычного пользователя в клиенте.
     return client
 
 @pytest.fixture
-def note(author):
-    note = Note.objects.create(  # Создаём объект заметки.
+def news(author):
+    """Новость автора."""
+    news = News.objects.create(  # Создаём объект заметки.
         title='Заголовок',
         text='Текст заметки',
-        slug='note-slug',
-        author=author,
+        date=today
     )
-    return note
-
+    # print(news.author)
+    return news
 
 @pytest.fixture
-# Фикстура запрашивает другую фикстуру создания заметки.
-def slug_for_args(note):  
-    # И возвращает кортеж, который содержит slug заметки.
-    # На то, что это кортеж, указывает запятая в конце выражения.
-    return (note.slug,) 
+def comment(author, news):
+    """Комментарий автора."""
+    comment = Comment.objects.create(  # Создаём объект заметки.
+        news=news,
+        author=author,
+        text='text',
+    )
+    return comment
+
+@pytest.fixture
+def create_news():
+    """10 новостей автора"""
+    all_news = News.objects.bulk_create(
+        News(title=f'Новость {index}',
+             text='Просто текст.',
+             date=today - timedelta(days=index))
+        for index in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1)
+    )
+    return all_news
+
+@pytest.fixture
+def create_comments(news, author):
+    """5 комментариев автора"""
+    now = timezone.now()
+    for index in range(5):
+        comment = Comment.objects.create(
+            news=news, author=author, text=f'Tекст {index}',
+        )
+        comment.created = now + timedelta(days=index)
+        comment.save()
+
+@pytest.fixture
+def form_data():
+    return {
+        'text': 'Новый текст',
+    }
