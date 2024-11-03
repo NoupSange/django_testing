@@ -60,7 +60,7 @@ class TestNoteCreation(TestFixtures):
             'text': self.TEXT,
             'author': self.author
         })
-        note = Note.objects.get(title=self.TITLE)
+        note = Note.objects.get()
         result_slug = note.slug
         expected_slug = slugify(self.TITLE)
         self.assertEqual(result_slug, expected_slug)

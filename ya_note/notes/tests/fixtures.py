@@ -8,7 +8,6 @@ User = get_user_model()
 
 
 class TestFixtures(TestCase):
-    NOTES_LIST_URL = reverse('notes:list')
 
     TITLE = 'Заголовок'
     TEXT = 'Текст'

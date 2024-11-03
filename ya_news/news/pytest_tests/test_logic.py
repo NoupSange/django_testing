@@ -26,7 +26,7 @@ def test_user_can_create_comment(author_client, author, news, news_detail_url):
 
 def test_user_cant_create_comment(client, news_detail_url):
     """Анонимный пользователь не может отправить комментарий."""
-    comments_count = Comment.objects.all().count()
+    comments_count = Comment.objects.count()
     form_data = {'text': 'Новый текст'}
     login_url = reverse('users:login')
     url = news_detail_url

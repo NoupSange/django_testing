@@ -12,7 +12,7 @@ class TestContent(TestFixtures):
         """Отдельная заметка передаётся на страницу со
         списком заметок в списке object_list в словаре context
         """
-        response = self.auth_client.get(self.NOTES_LIST_URL)
+        response = self.auth_client.get(self.list_url)
         notes_feed = response.context['notes_feed']
         self.assertIn(self.the_authors_note, notes_feed)
 
@@ -20,7 +20,7 @@ class TestContent(TestFixtures):
         """В список заметок одного пользователя не
         попадают заметки другого пользователя
         """
-        response = self.auth_client.get(self.NOTES_LIST_URL)
+        response = self.auth_client.get(self.list_url)
         notes_feed = response.context['notes_feed']
         self.assertNotIn(self.the_wrong_note, notes_feed)
 
