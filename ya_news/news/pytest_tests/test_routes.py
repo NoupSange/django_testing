@@ -17,7 +17,6 @@ def test_comment_delete_edit_availability_for_anonymous_user(
     """При попытке перейти на страницу редактирования или удаления комментария
     анонимный пользователь перенаправляется на страницу авторизации.
     """
-    login_url = login_url
     url = name
     expected_url = f'{login_url}?next={url}'
     response = client.get(url)

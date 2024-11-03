@@ -27,7 +27,6 @@ def test_user_cant_create_comment(client, news_detail_url, login_url):
     """Анонимный пользователь не может отправить комментарий."""
     comments_count = Comment.objects.count()
     form_data = {'text': 'Новый текст'}
-    login_url = login_url
     url = news_detail_url
     expected_url = f'{login_url}?next={url}'
     response = client.post(url, data=form_data)
