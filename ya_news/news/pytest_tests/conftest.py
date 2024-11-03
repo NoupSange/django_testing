@@ -63,7 +63,7 @@ def comment(author, news):
 
 @pytest.fixture
 def create_news():
-    """Набор новостей автора"""
+    """Набор новостей автора."""
     News.objects.bulk_create(
         News(title=f'Новость {index}',
              text='Просто текст.',
@@ -74,7 +74,7 @@ def create_news():
 
 @pytest.fixture
 def create_comments(news, author):
-    """5 комментариев автора"""
+    """Набор комментариев автора."""
     now = timezone.now()
     for index in range(5):
         comment = Comment.objects.create(
@@ -105,4 +105,22 @@ def comment_delete_url(comment):
 @pytest.fixture
 def comment_edit_url(comment):
     url = reverse('news:edit', args=(comment.pk,))
+    return url
+
+
+@pytest.fixture
+def login_url():
+    url = reverse('users:login')
+    return url
+
+
+@pytest.fixture
+def logout_url():
+    url = reverse('users:logout')
+    return url
+
+
+@pytest.fixture
+def signup_url():
+    url = reverse('users:signup')
     return url

@@ -1,13 +1,10 @@
 from http import HTTPStatus
 
-from django.contrib.auth import get_user_model
 from pytils.translit import slugify
 
 from notes.forms import WARNING
 from notes.models import Note
 from notes.tests.fixtures import TestFixtures
-
-User = get_user_model()
 
 
 class TestNoteCreation(TestFixtures):
@@ -24,15 +21,18 @@ class TestNoteCreation(TestFixtures):
             with self.subTest(user=user):
                 url = self.add_url
                 count_notes = Note.objects.count()
-                user.post(url, data={
+                post_data = {
                     'title': 'create_note_title',
                     'text': 'create_note_text',
-                    'author': 'create_note_author',
                     'slug': 'create_note_slug',
                 }
-                )
+                user.post(url, post_data)
                 count_result = Note.objects.count()
                 self.assertEqual(count_result, count_notes + note)
+                if user == self.auth_client:
+                    note = Note.objects.get(slug=post_data['slug'])
+                    assert note.title == post_data['title']
+                    assert note.text == post_data['text']
 
     def test_cant_create_identical_slug_notes(self):
         """Невозможно создать две заметки с одинаковым slug."""
@@ -40,14 +40,14 @@ class TestNoteCreation(TestFixtures):
         response = self.auth_client.post(
             self.add_url, data=self.the_same_note_form_data
         )
+        count_result = Note.objects.count()
+        self.assertEqual(count_result, count_notes)
         self.assertFormError(
             response,
             form='form',
             field='slug',
             errors=self.SLUG_THE_SAME + WARNING,
         )
-        count_result = Note.objects.all().count()
-        self.assertEqual(count_result, count_notes)
 
     def test_auto_generate_slug(self):
         """Если при создании заметки не заполнен slug, то он формируется
@@ -58,7 +58,6 @@ class TestNoteCreation(TestFixtures):
         self.auth_client.post(url, data={
             'title': self.TITLE,
             'text': self.TEXT,
-            'author': self.author
         })
         note = Note.objects.get()
         result_slug = note.slug

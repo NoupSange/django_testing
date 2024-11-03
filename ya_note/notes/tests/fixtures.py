@@ -31,7 +31,6 @@ class TestFixtures(TestCase):
         cls.the_same_note_form_data = {
             'title': cls.TITLE,
             'text': cls.TEXT,
-            'author': cls.author,
             'slug': cls.SLUG_THE_SAME,
         }
         cls.the_same_note = Note.objects.create(
@@ -70,3 +69,6 @@ class TestFixtures(TestCase):
         cls.success_url = reverse('notes:success')
         cls.homepage_url = reverse('notes:home')
         cls.list_url = reverse('notes:list')
+        cls.login_url = reverse('users:login')
+        cls.logout_url = reverse('users:logout')
+        cls.signup_url = reverse('users:signup')

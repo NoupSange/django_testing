@@ -1,11 +1,6 @@
 from http import HTTPStatus
 
-from django.contrib.auth import get_user_model
-from django.urls import reverse
-
 from notes.tests.fixtures import TestFixtures
-
-User = get_user_model()
 
 
 class TestRoutes(TestFixtures):
@@ -21,9 +16,9 @@ class TestRoutes(TestFixtures):
         страница успешного добавления заметки,
         страница добавления новой заметки.
         """
-        for name in ('notes:list', 'notes:success', 'notes:add'):
+        for name in (self.list_url, self.success_url, self.add_url):
             with self.subTest(user=self.reader):
-                url = reverse(name)
+                url = name
                 response = self.reader_client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
@@ -33,11 +28,10 @@ class TestRoutes(TestFixtures):
         зайти другой пользователь — вернётся ошибка 404.
         """
         users_statuses = (
-            (self.author, HTTPStatus.OK),
-            (self.reader, HTTPStatus.NOT_FOUND),
+            (self.auth_client, HTTPStatus.OK),
+            (self.reader_client, HTTPStatus.NOT_FOUND),
         )
         for user, status in users_statuses:
-            self.client.force_login(user)
             for name in (
                 (self.detail_url),
                 (self.delete_url),
@@ -45,7 +39,7 @@ class TestRoutes(TestFixtures):
             ):
                 with self.subTest(user=user):
                     url = name
-                    response = self.client.get(url)
+                    response = user.get(url)
                     self.assertEqual(response.status_code, status)
 
     def test_redirect_for_anonymous_client(self):
@@ -54,7 +48,7 @@ class TestRoutes(TestFixtures):
         редактирования или удаления заметки анонимный пользователь
         перенаправляется на страницу логина.
         """
-        login_url = reverse('users:login')
+        login_url = self.login_url
         for name in (
             (self.list_url),
             (self.success_url),
@@ -79,12 +73,12 @@ class TestRoutes(TestFixtures):
             (self.client, HTTPStatus.OK)
         )
         for name in (
-            ('users:login'),
-            ('users:logout'),
-            ('users:signup'),
+            (self.login_url),
+            (self.logout_url),
+            (self.signup_url),
         ):
             with self.subTest(name=name):
                 for user, status in users_statuses:
-                    url = reverse(name)
+                    url = name
                     response = user.get(url)
                     self.assertEqual(response.status_code, status)

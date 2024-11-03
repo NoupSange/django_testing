@@ -1,16 +1,12 @@
-from django.contrib.auth import get_user_model
-
 from notes.forms import NoteForm
 from notes.tests.fixtures import TestFixtures
-
-User = get_user_model()
 
 
 class TestContent(TestFixtures):
 
     def test_note_present_in_notelist(self):
         """Отдельная заметка передаётся на страницу со
-        списком заметок в списке object_list в словаре context
+        списком заметок в списке object_list в словаре context.
         """
         response = self.auth_client.get(self.list_url)
         notes_feed = response.context['notes_feed']
