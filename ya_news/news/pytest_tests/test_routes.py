@@ -1,14 +1,14 @@
 from http import HTTPStatus
-import pytest
 
+import pytest
 from django.urls import reverse
 from pytest_django.asserts import assertRedirects
 
 
 @pytest.mark.django_db
-def test_home_availability_for_anonymous_user(client):
+def test_home_availability_for_anonymous_user(client, homepage_url):
     """Главная страница доступна анонимному пользователю."""
-    url = reverse('news:home')
+    url = homepage_url
     response = client.get(url)
     assert response.status_code == HTTPStatus.OK
 
@@ -58,7 +58,6 @@ def test_comment_delete_edit_availability_for_different_users(
     или удаления чужих комментариев (возвращается ошибка 404).
     """
     url = reverse(name, args=(comment.pk,))
-    print(parametrized_client)
     response = parametrized_client.get(url)
     assert response.status_code == expected_status
 
@@ -74,3 +73,50 @@ def test_authorization_availability_for_anonymous_user(name, client):
     url = reverse(name)
     response = client.get(url)
     assert response.status_code == HTTPStatus.OK
+
+
+@pytest.mark.parametrize(
+    'reverse_url, parametrized_client, status',
+    (
+        (
+            reverse('users:signup'),
+            pytest.lazy_fixture('client'),
+            HTTPStatus.OK
+        ),
+        (
+            reverse('users:login'),
+            pytest.lazy_fixture('client'),
+            HTTPStatus.OK
+        ),
+        (
+            reverse('users:logout'),
+            pytest.lazy_fixture('client'),
+            HTTPStatus.OK
+        ),
+        (
+            pytest.lazy_fixture('comment_edit_url'),
+            pytest.lazy_fixture('not_author_client'),
+            HTTPStatus.NOT_FOUND
+        ),
+        (
+            pytest.lazy_fixture('comment_edit_url'),
+            pytest.lazy_fixture('author_client'),
+            HTTPStatus.OK
+        ),
+        (
+            pytest.lazy_fixture('comment_delete_url'),
+            pytest.lazy_fixture('not_author_client'),
+            HTTPStatus.NOT_FOUND
+        ),
+        (
+            pytest.lazy_fixture('comment_delete_url'),
+            pytest.lazy_fixture('author_client'),
+            HTTPStatus.OK
+        ),
+    )
+)
+def test_authorization_availability_for_anonymous1_user(
+    reverse_url, parametrized_client, status
+):
+    response = parametrized_client.get(reverse_url)
+    assert response.status_code == status

@@ -1,30 +1,18 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
 from django.urls import reverse
 
-from notes.models import Note
+from notes.tests.fixtures import TestFixtures
 
 User = get_user_model()
 
 
-class TestRoutes(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        """Создание фикстур автора заметки и просто
-        аутентифицированного пользователя, объекта заметки
-        """
-        cls.author = User.objects.create(username='Автор заметки')
-        cls.reader = User.objects.create(username='Читатель')
-        cls.note = Note.objects.create(
-            title='Заголовок', text='Текст', author=cls.author
-        )
+class TestRoutes(TestFixtures):
 
     def test_home_page(self):
         """Главная страница доступна анонимному пользователю."""
-        response = self.client.get('/')
+        response = self.client.get(self.homepage_url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_user_pages_availability(self):
@@ -33,11 +21,10 @@ class TestRoutes(TestCase):
         страница успешного добавления заметки,
         страница добавления новой заметки.
         """
-        self.client.force_login(self.reader)
         for name in ('notes:list', 'notes:success', 'notes:add'):
             with self.subTest(user=self.reader):
                 url = reverse(name)
-                response = self.client.get(url)
+                response = self.reader_client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_author_pages_availability(self):
@@ -51,13 +38,13 @@ class TestRoutes(TestCase):
         )
         for user, status in users_statuses:
             self.client.force_login(user)
-            for name, args in (
-                ('notes:detail', (self.note.slug,)),
-                ('notes:delete', (self.note.slug,)),
-                ('notes:edit', (self.note.slug,)),
+            for name in (
+                (self.detail_url),
+                (self.delete_url),
+                (self.edit_url),
             ):
                 with self.subTest(user=user):
-                    url = reverse(name, args=args)
+                    url = name
                     response = self.client.get(url)
                     self.assertEqual(response.status_code, status)
 
@@ -68,16 +55,16 @@ class TestRoutes(TestCase):
         перенаправляется на страницу логина.
         """
         login_url = reverse('users:login')
-        for name, args in (
-            ('notes:list', None),
-            ('notes:success', None),
-            ('notes:add', None),
-            ('notes:detail', (self.note.slug,)),
-            ('notes:edit', (self.note.slug,)),
-            ('notes:delete', (self.note.slug,)),
+        for name in (
+            (self.list_url),
+            (self.success_url),
+            (self.add_url),
+            (self.detail_url),
+            (self.edit_url),
+            (self.delete_url),
         ):
             with self.subTest(name=name):
-                url = reverse(name, args=args)
+                url = name
                 redirect_url = f'{login_url}?next={url}'
                 response = self.client.get(url)
                 self.assertRedirects(response, redirect_url)
@@ -87,9 +74,9 @@ class TestRoutes(TestCase):
         запись и выхода из неё доступны всем пользователям.
         """
         users_statuses = (
-            (self.author, HTTPStatus.OK),
-            (self.reader, HTTPStatus.OK),
-            (None, HTTPStatus.OK)
+            (self.auth_client, HTTPStatus.OK),
+            (self.reader_client, HTTPStatus.OK),
+            (self.client, HTTPStatus.OK)
         )
         for name in (
             ('users:login'),
@@ -98,10 +85,6 @@ class TestRoutes(TestCase):
         ):
             with self.subTest(name=name):
                 for user, status in users_statuses:
-                    if user is not None:
-                        self.client.force_login(user)
-                    else:
-                        pass
                     url = reverse(name)
-                    response = self.client.get(url)
+                    response = user.get(url)
                     self.assertEqual(response.status_code, status)
