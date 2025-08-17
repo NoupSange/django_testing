@@ -2,7 +2,7 @@
 Стек технологий:<br>
 ![Static Badge](https://img.shields.io/badge/unittest-yellow?style=for-the-badge)
 ![Static Badge](https://img.shields.io/badge/pytest_7.1.3-yellow?style=for-the-badge)
-![Static Badge](https://img.shields.io/badge/python_3.9-yellow?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/python_3.9+-yellow?style=for-the-badge)
 ![Static Badge](https://img.shields.io/badge/Pytest_django_4.5.2-yellow?style=for-the-badge)
 ![Static Badge](https://img.shields.io/badge/Django_3.2.15-yellow?style=for-the-badge)
 
